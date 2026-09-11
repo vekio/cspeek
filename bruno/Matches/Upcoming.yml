@@ -1,0 +1,102 @@
+info:
+  name: Upcoming
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{base_url}}match?wiki={{wiki}}&conditions={{upcoming_conditions}}&query={{match_fields}}&order=date ASC,objectname ASC&limit={{limit}}&offset={{offset}}&rawstreams=false&streamurls=false"
+  headers:
+    - name: accept
+      value: application/json
+      description: Return JSON.
+    - name: Accept-Encoding
+      value: gzip
+      description: Accept gzip compression, as required by the API.
+  params:
+    - name: wiki
+      value: "{{wiki}}"
+      type: query
+      description: Wiki to search; counterstrike covers Counter-Strike.
+    - name: conditions
+      value: "{{upcoming_conditions}}"
+      type: query
+      description: Unfinished matches with exact start times, filtered by tier and qualifier setting. No date range.
+    - name: query
+      value: "{{match_fields}}"
+      type: query
+      description: "Fields to return: teams, scores, schedule, tournament, tier/type, section, and links."
+    - name: order
+      value: date ASC,objectname ASC
+      type: query
+      description: Start time ascending; objectname breaks ties.
+    - name: limit
+      value: "{{limit}}"
+      type: query
+      description: "Results per page. Maximum: 1000."
+    - name: offset
+      value: "{{offset}}"
+      type: query
+      description: Results to skip. Start at 0; add limit for the next page.
+    - name: rawstreams
+      value: "false"
+      type: query
+      description: false keeps Liquipedia stream names when streamurls is also false.
+    - name: streamurls
+      value: "false"
+      type: query
+      description: false returns stream names instead of URLs.
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const game = bru.getEnvVar("game");
+        const tier = String(bru.getEnvVar("tier") ?? "").trim();
+        if (tier && !/^[1-9]\d*$/.test(tier)) {
+          throw new Error("tier must be a positive integer or empty for all tiers");
+        }
+        // Keep started and future matches together, with no date cutoff.
+        // Require exact start times so the schedule contains confirmed times.
+        const conditions = [
+          `[[game::${game}]]`,
+          "[[finished::0]]",
+          "[[dateexact::1]]"
+        ];
+        // An empty tier includes all categories.
+        if (tier) {
+          conditions.push(`[[liquipediatier::${tier}]]`);
+        }
+        const includeQualifiers = String(bru.getEnvVar("include_qualifiers") ?? "false").trim();
+        if (!["true", "false"].includes(includeQualifiers)) {
+          throw new Error("include_qualifiers must be true or false");
+        }
+        // Qualifiers share the event tier but are a separate competition type.
+        if (includeQualifiers === "false") {
+          conditions.push("[[liquipediatiertype::!Qualifier]]");
+        }
+        bru.setVar("upcoming_conditions", conditions.join(" AND "));
+        bru.setVar("match_fields", [
+          "objectname", "match2id", "pagename", "game", "date", "dateexact",
+          "finished", "status", "winner", "walkover", "resulttype", "bestof",
+          "tournament", "tickername", "liquipediatier", "liquipediatiertype", "section", "extradata",
+          "match2opponents", "match2games", "stream", "links"
+        ].join(","));
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Show ongoing and scheduled matches together. Include unfinished matches with
+  exact start times, without a past or future date limit.
+
+  Select a tier, or leave it empty for all categories. Qualifiers are excluded
+  unless include_qualifiers=true. Results are ordered by scheduled start.
+
+  Use limit for page size and increase offset by limit for each full page.
+  Keep the same filters while paging.

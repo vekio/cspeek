@@ -1,0 +1,26 @@
+name: prod
+variables:
+  - name: base_url
+    value: https://api.liquipedia.net/api/v3/
+    description: API base URL, including the trailing slash.
+  - name: wiki
+    value: counterstrike
+    description: Wiki to search. counterstrike covers Counter-Strike.
+  - name: game
+    value: cs2
+    description: Game to include. cs2 selects Counter-Strike 2.
+  - name: tier
+    value: "4"
+    description: 1=S, 2=A, 3=B, 4=C. Leave empty for all tiers.
+  - name: limit
+    value: "100"
+    description: "Results per page. Maximum: 1000."
+  - name: offset
+    value: "0"
+    description: Results to skip. Start at 0; add limit for the next page.
+  - secret: true
+    name: api_key
+    description: Secret API key without the Apikey prefix.
+  - name: include_qualifiers
+    value: "false"
+    description: Include Qualifier events alongside regular events of the selected tier.

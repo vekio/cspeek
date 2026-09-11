@@ -1,1 +1,9 @@
 = cspeek
+
+CSpeek is a CLI/TUI for quickly checking CS2 matches, schedules, live games, and recent results directly from your terminal.
+
+Match data is provided by the free Liquipedia API. Huge thanks to Liquipedia and its contributors for making this data available.
+
+== API exploration
+
+The `bruno/` collection provides requests for exploring the Liquipedia API.
