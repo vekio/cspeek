@@ -10,6 +10,7 @@ import (
 
 	vekconfig "github.com/vekio/config"
 	appconfig "github.com/vekio/cspeek/internal/config"
+	"github.com/vekio/cspeek/internal/matches"
 )
 
 func TestRootProvidesConfigurationCommandsAndFlag(t *testing.T) {
@@ -36,7 +37,7 @@ func TestConfigInitWritesAPIKeySetting(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(t.TempDir(), "custom.yml")
-	command := newRootCommand(file, appconfig.Default(), func(appconfig.Config) (liquipediaClient, error) {
+	command := newRootCommand(file, appconfig.Default(), func(appconfig.Config) (matches.Source, error) {
 		t.Fatal("config command created an API client")
 		return nil, nil
 	})

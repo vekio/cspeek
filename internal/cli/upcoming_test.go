@@ -8,6 +8,7 @@ import (
 	"time"
 
 	appconfig "github.com/vekio/cspeek/internal/config"
+	matchservice "github.com/vekio/cspeek/internal/matches"
 	"github.com/vekio/cspeek/pkg/liquipedia"
 )
 
@@ -24,7 +25,7 @@ func TestUpcomingUsesSharedMatchOutputAndFilters(t *testing.T) {
 	}}}}
 	command := newUpcomingCommand(
 		testConfigFile(t, appconfig.Config{APIKey: "secret"}),
-		func(appconfig.Config) (liquipediaClient, error) { return fake, nil },
+		func(appconfig.Config) (matchservice.Source, error) { return fake, nil },
 	)
 	var output bytes.Buffer
 	command.Writer, command.ErrWriter = &output, &bytes.Buffer{}
@@ -43,7 +44,7 @@ func TestUpcomingTierAndQualifierOptions(t *testing.T) {
 	fake := &fakeMatchesClient{}
 	command := newUpcomingCommand(
 		testConfigFile(t, appconfig.Config{APIKey: "secret"}),
-		func(appconfig.Config) (liquipediaClient, error) { return fake, nil },
+		func(appconfig.Config) (matchservice.Source, error) { return fake, nil },
 	)
 	command.Writer, command.ErrWriter = &bytes.Buffer{}, &bytes.Buffer{}
 	if err := command.Run(context.Background(), []string{
@@ -61,7 +62,7 @@ func TestUpcomingTierAndQualifierOptions(t *testing.T) {
 func TestUpcomingRejectsArguments(t *testing.T) {
 	command := newUpcomingCommand(
 		testConfigFile(t, appconfig.Config{APIKey: "secret"}),
-		func(appconfig.Config) (liquipediaClient, error) {
+		func(appconfig.Config) (matchservice.Source, error) {
 			t.Fatal("client must not be created")
 			return nil, nil
 		},

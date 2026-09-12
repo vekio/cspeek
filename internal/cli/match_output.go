@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/vekio/cspeek/pkg/liquipedia"
+	"github.com/vekio/cspeek/internal/matches"
 )
 
 const (
@@ -38,31 +38,24 @@ type matchOpponentDTO struct {
 	Score *int   `json:"score"`
 }
 
-func newMatchDTOs(matches []liquipedia.Match) []matchDTO {
-	items := make([]matchDTO, 0, len(matches))
-	for _, match := range matches {
+func newMatchDTOs(source []matches.Match) []matchDTO {
+	items := make([]matchDTO, 0, len(source))
+	for _, match := range source {
 		items = append(items, newMatchDTO(match))
 	}
 	return items
 }
 
-func newMatchDTO(match liquipedia.Match) matchDTO {
+func newMatchDTO(match matches.Match) matchDTO {
 	opponents := make([]matchOpponentDTO, 0, len(match.Opponents))
 	for _, opponent := range match.Opponents {
-		name := strings.TrimSpace(opponent.Name)
-		if opponent.TeamTemplate != nil && strings.TrimSpace(opponent.TeamTemplate.Name) != "" {
-			name = strings.TrimSpace(opponent.TeamTemplate.Name)
-		}
-		if name == "" {
-			name = "TBD"
-		}
-		opponents = append(opponents, matchOpponentDTO{Name: name, Score: opponent.Score})
+		opponents = append(opponents, matchOpponentDTO{Name: opponent.Name, Score: opponent.Score})
 	}
 	return matchDTO{
-		ID:         match.ObjectName,
+		ID:         match.ID,
 		MatchID:    match.MatchID,
 		PageName:   match.PageName,
-		Start:      match.Date,
+		Start:      match.Start,
 		Opponents:  opponents,
 		BestOf:     match.BestOf,
 		Tournament: match.Tournament,
@@ -140,24 +133,6 @@ func writeWarnings(output io.Writer, warnings []string) error {
 		}
 	}
 	return nil
-}
-
-func uniqueMatches(matches []liquipedia.Match) []liquipedia.Match {
-	unique := make([]liquipedia.Match, 0, len(matches))
-	seen := make(map[string]struct{}, len(matches))
-	for _, match := range matches {
-		key := match.ObjectName
-		if key == "" {
-			unique = append(unique, match)
-			continue
-		}
-		if _, exists := seen[key]; exists {
-			continue
-		}
-		seen[key] = struct{}{}
-		unique = append(unique, match)
-	}
-	return unique
 }
 
 func cleanField(value string) string {

@@ -12,6 +12,7 @@ import (
 
 	vekconfig "github.com/vekio/config"
 	appconfig "github.com/vekio/cspeek/internal/config"
+	matchservice "github.com/vekio/cspeek/internal/matches"
 	"github.com/vekio/cspeek/pkg/liquipedia"
 )
 
@@ -78,7 +79,7 @@ func TestLivePlainOutputAndQuery(t *testing.T) {
 		Warnings: []string{"partial data"},
 	}}
 	var stdout, stderr bytes.Buffer
-	command := newLiveCommand(testConfigFile(t, appconfig.Config{APIKey: "secret"}), func(config appconfig.Config) (liquipediaClient, error) {
+	command := newLiveCommand(testConfigFile(t, appconfig.Config{APIKey: "secret"}), func(config appconfig.Config) (matchservice.Source, error) {
 		if config.APIKey != "secret" {
 			t.Fatalf("API key = %q", config.APIKey)
 		}
@@ -107,7 +108,7 @@ func TestLiveJSONOutput(t *testing.T) {
 		Opponents: []liquipedia.Opponent{{Name: "Alpha", Score: &unknown}, {Name: ""}},
 	}}}}
 	var stdout bytes.Buffer
-	command := newLiveCommand(testConfigFile(t, appconfig.Config{APIKey: "secret"}), func(appconfig.Config) (liquipediaClient, error) { return fake, nil }, time.Now)
+	command := newLiveCommand(testConfigFile(t, appconfig.Config{APIKey: "secret"}), func(appconfig.Config) (matchservice.Source, error) { return fake, nil }, time.Now)
 	command.Writer, command.ErrWriter = &stdout, &bytes.Buffer{}
 	if err := command.Run(context.Background(), []string{"live", "--json", "--include-qualifiers"}); err != nil {
 		t.Fatal(err)
@@ -133,7 +134,7 @@ func TestLiveErrors(t *testing.T) {
 		if err := os.WriteFile(file.Path(), []byte("api_key: \"\"\n"), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		command := newLiveCommand(file, func(appconfig.Config) (liquipediaClient, error) {
+		command := newLiveCommand(file, func(appconfig.Config) (matchservice.Source, error) {
 			t.Fatal("client must not be created")
 			return nil, nil
 		}, time.Now)
@@ -143,7 +144,7 @@ func TestLiveErrors(t *testing.T) {
 	})
 	t.Run("client error", func(t *testing.T) {
 		want := errors.New("API unavailable")
-		command := newLiveCommand(testConfigFile(t, appconfig.Config{APIKey: "secret"}), func(appconfig.Config) (liquipediaClient, error) {
+		command := newLiveCommand(testConfigFile(t, appconfig.Config{APIKey: "secret"}), func(appconfig.Config) (matchservice.Source, error) {
 			return &fakeMatchesClient{err: want}, nil
 		}, time.Now)
 		if err := command.Run(context.Background(), []string{"live"}); !errors.Is(err, want) {
@@ -153,16 +154,9 @@ func TestLiveErrors(t *testing.T) {
 }
 
 func TestTierFlag(t *testing.T) {
-	for input, want := range map[string]string{
-		"curated": "[[extradata_featured::1]]",
-		"S":       "[[liquipediatier::1]]",
-		"A":       "[[liquipediatier::2]]",
-		"B":       "[[liquipediatier::3]]",
-		"C":       "[[liquipediatier::4]]",
-	} {
-		got, ok := tierCondition(input)
-		if !ok || got != want {
-			t.Errorf("tierCondition(%q) = %q, %v; want %q, true", input, got, ok, want)
+	for _, value := range []string{"curated", "S", "A", "B", "C"} {
+		if err := validateTier(value); err != nil {
+			t.Errorf("validateTier(%q) error = %v", value, err)
 		}
 	}
 	if err := validateTier("4"); err == nil {

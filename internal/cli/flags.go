@@ -2,15 +2,15 @@ package cli
 
 import (
 	"errors"
-	"strings"
 
 	urfavecli "github.com/urfave/cli/v3"
 	vekconfig "github.com/vekio/config"
 	configurfave "github.com/vekio/config/urfave"
 	appconfig "github.com/vekio/cspeek/internal/config"
+	"github.com/vekio/cspeek/internal/matches"
 )
 
-const defaultTier = "curated"
+const defaultTier = string(matches.TierCurated)
 
 func configFlag(file *vekconfig.ConfigFile[appconfig.Config]) urfavecli.Flag {
 	return configurfave.NewConfigFlag(file)
@@ -70,25 +70,6 @@ func jsonFlag() urfavecli.Flag {
 }
 
 func validateTier(value string) error {
-	if _, ok := tierCondition(value); !ok {
-		return errors.New("tier must be curated, S, A, B, or C")
-	}
-	return nil
-}
-
-func tierCondition(value string) (string, bool) {
-	switch strings.ToUpper(value) {
-	case "CURATED":
-		return "[[extradata_featured::1]]", true
-	case "S":
-		return "[[liquipediatier::1]]", true
-	case "A":
-		return "[[liquipediatier::2]]", true
-	case "B":
-		return "[[liquipediatier::3]]", true
-	case "C":
-		return "[[liquipediatier::4]]", true
-	default:
-		return "", false
-	}
+	_, err := matches.ParseTier(value)
+	return err
 }
