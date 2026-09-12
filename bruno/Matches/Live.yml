@@ -9,73 +9,76 @@ http:
   headers:
     - name: accept
       value: application/json
-      description: "Return JSON."
+      description: Request a JSON response.
     - name: Accept-Encoding
       value: gzip
-      description: "Accept gzip compression, as required by the API."
+      description: Enable the compression required by Liquipedia.
   params:
     - name: wiki
       value: "{{wiki}}"
       type: query
-      description: "Wiki to search; counterstrike covers Counter-Strike."
+      description: Liquipedia wiki to query.
     - name: conditions
       value: "{{live_conditions}}"
       type: query
-      description: "Unfinished matches with an exact start at or before now, filtered by tier and qualifier setting."
+      description: Live candidate conditions generated before each request.
     - name: query
       value: "{{match_fields}}"
       type: query
-      description: "Fields to return: teams, scores, schedule, tournament, tier/type, section, and links."
+      description: Fields needed to inspect and display a match.
     - name: order
       value: date ASC,objectname ASC
       type: query
-      description: "Start time ascending; objectname breaks ties."
+      description: Sort by start time, then by stable record name.
     - name: limit
       value: "{{limit}}"
       type: query
-      description: "Results per page. Maximum: 1000."
+      description: Page size from 1 to 1000.
     - name: offset
       value: "{{offset}}"
       type: query
-      description: "Results to skip. Start at 0; add limit for the next page."
+      description: Number of API records to skip.
     - name: rawstreams
       value: "false"
       type: query
-      description: "false keeps Liquipedia stream names when streamurls is also false."
+      description: Keep normalized Liquipedia stream names.
     - name: streamurls
       value: "false"
       type: query
-      description: "false returns stream names instead of URLs."
+      description: Return stream names instead of resolved URLs.
   auth: inherit
 
 runtime:
   scripts:
     - type: before-request
       code: |-
-        // Use one UTC timestamp for both the before-now and equal-now comparisons.
+        // Freeze one UTC cutoff. The API has < and = comparisons, but no <=.
         const now = new Date().toISOString().slice(0, 19).replace("T", " ");
         const game = bru.getEnvVar("game");
-        const tier = String(bru.getEnvVar("tier") ?? "").trim();
-        if (tier && !/^[1-9]\d*$/.test(tier)) {
-          throw new Error("tier must be a positive integer or empty for all tiers");
+        const tier = String(bru.getEnvVar("tier") ?? "curated").trim().toLowerCase();
+        // Letter labels map to the numeric tier values stored by Liquipedia.
+        const tierValues = {s: "1", a: "2", b: "3", c: "4"};
+        if (tier && tier !== "curated" && !tierValues[tier]) {
+          throw new Error("tier must be curated, S, A, B, C, or empty for all tiers");
         }
-        // Require an exact start to avoid treating approximate schedules as live.
-        // Include starts equal to now, without excluding older unfinished matches.
+        // An exact start at or before the cutoff is a live candidate.
         const conditions = [
           `[[game::${game}]]`,
           "[[finished::0]]",
           "[[dateexact::1]]",
           `([[date::<${now}]] OR [[date::${now}]])`
         ];
-        // An empty tier includes all categories.
-        if (tier) {
-          conditions.push(`[[liquipediatier::${tier}]]`);
+        // Liquipedia stores the featured boolean as 1 in query conditions.
+        if (tier === "curated") {
+          conditions.push("[[extradata_featured::1]]");
+        } else if (tier) {
+          conditions.push(`[[liquipediatier::${tierValues[tier]}]]`);
         }
-        const includeQualifiers = String(bru.getEnvVar("include_qualifiers") ?? "false").trim();
+        const includeQualifiers = String(bru.getEnvVar("include_qualifiers") ?? "false").trim().toLowerCase();
         if (!["true", "false"].includes(includeQualifiers)) {
           throw new Error("include_qualifiers must be true or false");
         }
-        // Qualifiers share the event tier but are a separate competition type.
+        // A qualifier can share its parent event's tier, so filter its type separately.
         if (includeQualifiers === "false") {
           conditions.push("[[liquipediatiertype::!Qualifier]]");
         }
@@ -94,13 +97,5 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  Find matches expected to be in progress: unfinished, with an exact scheduled
-  start at or before now in UTC. No age limit is applied. A delayed match or an
-  outdated result can still appear.
-
-  Select a tier, or leave it empty for all categories. Qualifiers are excluded
-  unless include_qualifiers=true. Results are ordered by scheduled start.
-
-  Use limit for page size and increase offset by limit for each full page.
-  For later pages, reuse the first request's resolved conditions to keep the
-  same time cutoff.
+  Returns live candidates: unfinished matches with an exact scheduled start at
+  or before the request time. Delayed matches and stale records may still appear.

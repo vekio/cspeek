@@ -6,5 +6,13 @@ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/urfave/cli/v3 v3.11.0 h1:P/euJp99kb9p0tlVY+iYTLYYTAQlfl0hR2gUO1Img1Q=
 github.com/urfave/cli/v3 v3.11.0/go.mod h1:ysVLtOEmg2tOy6PknnYVhDoouyC/6N42TMeoMzskhso=
+github.com/vekio/config v0.5.0 h1:MbM00rGJbbMK00hHuXR8WhcvLdh3pIdbLC0TbJPZZT8=
+github.com/vekio/config v0.5.0/go.mod h1:bHmC0k3yokE1llI7gbRciZmoUPpSGIeFFRQczwPqQog=
+github.com/vekio/config/urfave v0.3.0 h1:9tYdzVyxWAsqYeNmq1LEaQIgBQxyyfmLoMtEsvDitZc=
+github.com/vekio/config/urfave v0.3.0/go.mod h1:hX/LmjAeSHxiDdACYA7ELLlhEdN+y4ngB1GxDf+xrFI=
+github.com/vekio/x v0.0.1 h1:lzFwlM0bbuhAgWMKdytFkX7S9JVEM2b94JZlmHI7UV0=
+github.com/vekio/x v0.0.1/go.mod h1:C1/qVGQF0d3ObOQIn7JVI8ECQP3okrfjNQLnjQ8ZHuo=
+go.yaml.in/yaml/v4 v4.0.0-rc.6 h1:1h7H1ohdUh93/FyE4YaDa1Zh64K6VVbjF4K6WUxMtH4=
+go.yaml.in/yaml/v4 v4.0.0-rc.6/go.mod h1:aZqd9kCMsGL7AuUv/m/PvWLdg5sjJsZ4oHDEnfPPfY0=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=

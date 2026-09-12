@@ -7,3 +7,67 @@ Match data is provided by the free Liquipedia API. Huge thanks to Liquipedia and
 == API exploration
 
 The `bruno/` collection provides requests for exploring the Liquipedia API.
+
+== Usage
+
+Create the configuration file, then add your Liquipedia API key to it:
+
+[source,shell]
+----
+cspeek config init
+$EDITOR "$(cspeek config path)"
+cspeek live
+cspeek upcoming
+----
+
+Use `--config path/to/config.yml` to select another configuration file.
+
+=== Match options
+
+The `live` and `upcoming` commands share these options:
+
+[cols="1,1,3",options="header"]
+|===
+|Option |Default |Description
+
+|`--tier VALUE`
+|`curated`
+|Accept `curated`, `S`, `A`, `B`, or `C`. Curated can include
+matches from any tier; the website may also select matches through their parent
+tournament.
+
+|`--include-qualifiers`
+|`false`
+|Include qualifier events. They are excluded by default because they can share
+the tier of their parent event.
+
+|`--limit`
+|`100`
+|Set the number of API records requested in one page.
+
+|`--offset`
+|`0`
+|Skip API records for manual pagination.
+
+|`--json`
+|`false`
+|Write structured JSON instead of the table.
+|===
+
+The default output is an aligned table, uses the local timezone, and includes a
+header that terminal tools can keep visible:
+
+[source,shell]
+----
+cspeek live --tier C | fzf --header-lines=1
+cspeek upcoming --tier S | fzf --header-lines=1
+----
+
+The columns are start time, first team, score, second team, format, and tournament.
+Structured output retains match identifiers and is available with:
+
+[source,shell]
+----
+cspeek live --json | jq .
+cspeek upcoming --json | jq .
+----

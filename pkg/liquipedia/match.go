@@ -44,8 +44,13 @@ type Opponent struct {
 	Name         string         `json:"name"`
 	Score        *int           `json:"score"` // nil is absent; -1 is an unknown score, not zero.
 	Status       string         `json:"status"`
-	TeamTemplate jsontext.Value `json:"teamtemplate"`
+	TeamTemplate *TeamTemplate  `json:"teamtemplate"`
 	Players      jsontext.Value `json:"match2players"`
+}
+
+type TeamTemplate struct {
+	Name      string `json:"name"`
+	ShortName string `json:"shortname"`
 }
 
 type Game struct {
